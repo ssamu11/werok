@@ -354,135 +354,522 @@ export default function Minigame() {
   }, [])
 
   // ===========================================
-  // DRAW REALISTIC LUNG FUNCTION
   // ===========================================
   const drawRealisticLungs = useCallback((ctx: CanvasRenderingContext2D, health: number, tar: number) => {
     const centerX = GAME_WIDTH / 2
     const lungY = LUNG_Y
+    const scale = 1.2 // Slightly larger for better visibility
 
     // Calculate lung color based on health and tar
     const healthFactor = health / 100
     const tarFactor = tar / 100
 
-    // Healthy = pink/red, damaged = brown/black
-    const r = Math.floor(220 - tarFactor * 150)
-    const g = Math.floor(120 - tarFactor * 100 + healthFactor * 30)
-    const b = Math.floor(130 - tarFactor * 110)
+    // Healthy = soft pink pastel, damaged = brownish/gray
+    const baseR = 245
+    const baseG = 180
+    const baseB = 185
+
+    const r = Math.floor(baseR - tarFactor * 140)
+    const g = Math.floor(baseG - tarFactor * 120 + healthFactor * 15)
+    const b = Math.floor(baseB - tarFactor * 130)
     const lungColor = `rgb(${r}, ${g}, ${b})`
 
-    const darkerLung = `rgb(${Math.floor(r * 0.7)}, ${Math.floor(g * 0.7)}, ${Math.floor(b * 0.7)})`
-    const highlightLung = `rgb(${Math.min(255, r + 40)}, ${Math.min(255, g + 40)}, ${Math.min(255, b + 40)})`
+    const darkerLung = `rgb(${Math.floor(r * 0.75)}, ${Math.floor(g * 0.75)}, ${Math.floor(b * 0.75)})`
+    const highlightLung = `rgb(${Math.min(255, r + 25)}, ${Math.min(255, g + 30)}, ${Math.min(255, b + 30)})`
+    const shadowLung = `rgb(${Math.floor(r * 0.6)}, ${Math.floor(g * 0.6)}, ${Math.floor(b * 0.6)})`
+    const outlineColor = `rgba(${Math.floor(r * 0.5)}, ${Math.floor(g * 0.5)}, ${Math.floor(b * 0.5)}, 0.6)`
 
     ctx.save()
 
-    ctx.fillStyle = darkerLung
+    // ===========================================
+    // TRACHEA (Windpipe) - Cartilage rings style
+    // ===========================================
+    const tracheaX = centerX
+    const tracheaTop = lungY - 50 * scale
+    const tracheaWidth = 14 * scale
+    const tracheaHeight = 45 * scale
+
+    // Trachea shadow
+    ctx.fillStyle = shadowLung
     ctx.beginPath()
-    ctx.moveTo(centerX - 6, lungY - 35)
-    ctx.lineTo(centerX + 6, lungY - 35)
-    ctx.lineTo(centerX + 8, lungY - 5)
-    ctx.lineTo(centerX - 8, lungY - 5)
-    ctx.closePath()
+    ctx.roundRect(tracheaX - tracheaWidth / 2 + 2, tracheaTop + 2, tracheaWidth, tracheaHeight, 4)
     ctx.fill()
 
-    // Trachea rings
-    ctx.strokeStyle = `rgba(0,0,0,0.2)`
-    ctx.lineWidth = 1
-    for (let i = 0; i < 5; i++) {
+    // Trachea main body
+    const tracheaGradient = ctx.createLinearGradient(tracheaX - tracheaWidth / 2, 0, tracheaX + tracheaWidth / 2, 0)
+    tracheaGradient.addColorStop(0, darkerLung)
+    tracheaGradient.addColorStop(0.3, lungColor)
+    tracheaGradient.addColorStop(0.7, lungColor)
+    tracheaGradient.addColorStop(1, darkerLung)
+    ctx.fillStyle = tracheaGradient
+    ctx.beginPath()
+    ctx.roundRect(tracheaX - tracheaWidth / 2, tracheaTop, tracheaWidth, tracheaHeight, 4)
+    ctx.fill()
+
+    // Trachea cartilage rings
+    ctx.strokeStyle = darkerLung
+    ctx.lineWidth = 1.5
+    for (let i = 0; i < 6; i++) {
+      const ringY = tracheaTop + 8 + i * 7 * scale
       ctx.beginPath()
-      ctx.moveTo(centerX - 6, lungY - 30 + i * 5)
-      ctx.lineTo(centerX + 6, lungY - 30 + i * 5)
+      ctx.moveTo(tracheaX - tracheaWidth / 2 + 2, ringY)
+      ctx.lineTo(tracheaX + tracheaWidth / 2 - 2, ringY)
       ctx.stroke()
     }
 
-    ctx.fillStyle = lungColor
+    // Trachea outline
+    ctx.strokeStyle = outlineColor
+    ctx.lineWidth = 1.5
     ctx.beginPath()
-    ctx.moveTo(centerX - 15, lungY - 5)
-    // Top curve
-    ctx.bezierCurveTo(centerX - 25, lungY - 20, centerX - 60, lungY - 25, centerX - 75, lungY - 10)
-    // Left side
-    ctx.bezierCurveTo(centerX - 90, lungY + 5, centerX - 95, lungY + 25, centerX - 85, lungY + 40)
-    // Bottom curve
-    ctx.bezierCurveTo(centerX - 75, lungY + 55, centerX - 45, lungY + 55, centerX - 25, lungY + 45)
-    // Inner curve back to start
-    ctx.bezierCurveTo(centerX - 15, lungY + 35, centerX - 12, lungY + 15, centerX - 15, lungY - 5)
+    ctx.roundRect(tracheaX - tracheaWidth / 2, tracheaTop, tracheaWidth, tracheaHeight, 4)
+    ctx.stroke()
+
+    // ===========================================
+    // MAIN BRONCHI (Y-split)
+    // ===========================================
+    const bronchiY = tracheaTop + tracheaHeight
+
+    // Left main bronchus
+    ctx.fillStyle = darkerLung
+    ctx.beginPath()
+    ctx.moveTo(centerX - 5, bronchiY)
+    ctx.quadraticCurveTo(centerX - 25 * scale, bronchiY + 15 * scale, centerX - 40 * scale, bronchiY + 20 * scale)
+    ctx.lineTo(centerX - 35 * scale, bronchiY + 25 * scale)
+    ctx.quadraticCurveTo(centerX - 20 * scale, bronchiY + 20 * scale, centerX + 5, bronchiY + 8)
+    ctx.closePath()
     ctx.fill()
 
-    // Left lung highlight
-    ctx.fillStyle = highlightLung
-    ctx.globalAlpha = 0.3
+    // Right main bronchus
     ctx.beginPath()
-    ctx.ellipse(centerX - 55, lungY + 5, 20, 15, -0.3, 0, Math.PI * 2)
+    ctx.moveTo(centerX + 5, bronchiY)
+    ctx.quadraticCurveTo(centerX + 25 * scale, bronchiY + 15 * scale, centerX + 40 * scale, bronchiY + 20 * scale)
+    ctx.lineTo(centerX + 35 * scale, bronchiY + 25 * scale)
+    ctx.quadraticCurveTo(centerX + 20 * scale, bronchiY + 20 * scale, centerX - 5, bronchiY + 8)
+    ctx.closePath()
     ctx.fill()
-    ctx.globalAlpha = 1
 
-    ctx.fillStyle = lungColor
+    // ===========================================
+    // LEFT LUNG - Anatomically shaped (2 lobes)
+    // ===========================================
+    const leftLungX = centerX - 55 * scale
+    const lungBaseY = lungY + 5
+
+    // Left lung shadow
+    ctx.fillStyle = `rgba(0,0,0,0.15)`
     ctx.beginPath()
-    ctx.moveTo(centerX + 15, lungY - 5)
-    // Top curve
-    ctx.bezierCurveTo(centerX + 25, lungY - 20, centerX + 60, lungY - 25, centerX + 75, lungY - 10)
-    // Right side
-    ctx.bezierCurveTo(centerX + 90, lungY + 5, centerX + 95, lungY + 25, centerX + 85, lungY + 40)
+    ctx.moveTo(centerX - 18 * scale, lungBaseY - 15 * scale)
+    // Upper lobe top curve
+    ctx.bezierCurveTo(
+      centerX - 30 * scale,
+      lungBaseY - 35 * scale,
+      centerX - 65 * scale,
+      lungBaseY - 40 * scale,
+      centerX - 85 * scale,
+      lungBaseY - 25 * scale,
+    )
+    // Outer left edge
+    ctx.bezierCurveTo(
+      centerX - 100 * scale,
+      lungBaseY - 5 * scale,
+      centerX - 105 * scale,
+      lungBaseY + 25 * scale,
+      centerX - 95 * scale,
+      lungBaseY + 45 * scale,
+    )
     // Bottom curve
-    ctx.bezierCurveTo(centerX + 75, lungY + 55, centerX + 45, lungY + 55, centerX + 25, lungY + 45)
-    // Inner curve back to start
-    ctx.bezierCurveTo(centerX + 15, lungY + 35, centerX + 12, lungY + 15, centerX + 15, lungY - 5)
+    ctx.bezierCurveTo(
+      centerX - 80 * scale,
+      lungBaseY + 60 * scale,
+      centerX - 45 * scale,
+      lungBaseY + 58 * scale,
+      centerX - 25 * scale,
+      lungBaseY + 45 * scale,
+    )
+    // Inner mediastinal curve (concave for heart space)
+    ctx.bezierCurveTo(
+      centerX - 15 * scale,
+      lungBaseY + 30 * scale,
+      centerX - 12 * scale,
+      lungBaseY + 10 * scale,
+      centerX - 18 * scale,
+      lungBaseY - 15 * scale,
+    )
+    ctx.closePath()
     ctx.fill()
+
+    // Left lung main body with gradient
+    const leftLungGradient = ctx.createRadialGradient(
+      leftLungX + 10,
+      lungBaseY + 5,
+      5,
+      leftLungX,
+      lungBaseY + 15,
+      70 * scale,
+    )
+    leftLungGradient.addColorStop(0, highlightLung)
+    leftLungGradient.addColorStop(0.4, lungColor)
+    leftLungGradient.addColorStop(1, darkerLung)
+
+    ctx.fillStyle = leftLungGradient
+    ctx.beginPath()
+    ctx.moveTo(centerX - 20 * scale, lungBaseY - 18 * scale)
+    // Upper lobe top curve - more natural shape
+    ctx.bezierCurveTo(
+      centerX - 32 * scale,
+      lungBaseY - 38 * scale,
+      centerX - 68 * scale,
+      lungBaseY - 42 * scale,
+      centerX - 88 * scale,
+      lungBaseY - 28 * scale,
+    )
+    // Outer left edge with natural bulge
+    ctx.bezierCurveTo(
+      centerX - 102 * scale,
+      lungBaseY - 8 * scale,
+      centerX - 107 * scale,
+      lungBaseY + 22 * scale,
+      centerX - 97 * scale,
+      lungBaseY + 42 * scale,
+    )
+    // Bottom curve - rounded base
+    ctx.bezierCurveTo(
+      centerX - 82 * scale,
+      lungBaseY + 58 * scale,
+      centerX - 48 * scale,
+      lungBaseY + 55 * scale,
+      centerX - 28 * scale,
+      lungBaseY + 42 * scale,
+    )
+    // Inner mediastinal curve (cardiac notch - indentation for heart)
+    ctx.bezierCurveTo(
+      centerX - 18 * scale,
+      lungBaseY + 28 * scale,
+      centerX - 15 * scale,
+      lungBaseY + 8 * scale,
+      centerX - 20 * scale,
+      lungBaseY - 18 * scale,
+    )
+    ctx.closePath()
+    ctx.fill()
+
+    // Left lung oblique fissure (separates upper and lower lobes)
+    ctx.strokeStyle = darkerLung
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(centerX - 45 * scale, lungBaseY - 25 * scale)
+    ctx.quadraticCurveTo(centerX - 70 * scale, lungBaseY + 15 * scale, centerX - 35 * scale, lungBaseY + 45 * scale)
+    ctx.stroke()
+
+    // Left lung highlight (upper area)
+    ctx.fillStyle = `rgba(255,255,255,0.25)`
+    ctx.beginPath()
+    ctx.ellipse(centerX - 60 * scale, lungBaseY - 15 * scale, 18 * scale, 12 * scale, -0.4, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Left lung outline
+    ctx.strokeStyle = outlineColor
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(centerX - 20 * scale, lungBaseY - 18 * scale)
+    ctx.bezierCurveTo(
+      centerX - 32 * scale,
+      lungBaseY - 38 * scale,
+      centerX - 68 * scale,
+      lungBaseY - 42 * scale,
+      centerX - 88 * scale,
+      lungBaseY - 28 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX - 102 * scale,
+      lungBaseY - 8 * scale,
+      centerX - 107 * scale,
+      lungBaseY + 22 * scale,
+      centerX - 97 * scale,
+      lungBaseY + 42 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX - 82 * scale,
+      lungBaseY + 58 * scale,
+      centerX - 48 * scale,
+      lungBaseY + 55 * scale,
+      centerX - 28 * scale,
+      lungBaseY + 42 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX - 18 * scale,
+      lungBaseY + 28 * scale,
+      centerX - 15 * scale,
+      lungBaseY + 8 * scale,
+      centerX - 20 * scale,
+      lungBaseY - 18 * scale,
+    )
+    ctx.stroke()
+
+    // ===========================================
+    // RIGHT LUNG - Anatomically shaped (3 lobes)
+    // ===========================================
+    const rightLungX = centerX + 55 * scale
+
+    // Right lung shadow
+    ctx.fillStyle = `rgba(0,0,0,0.15)`
+    ctx.beginPath()
+    ctx.moveTo(centerX + 18 * scale + 3, lungBaseY - 15 * scale + 3)
+    ctx.bezierCurveTo(
+      centerX + 30 * scale + 3,
+      lungBaseY - 35 * scale + 3,
+      centerX + 65 * scale + 3,
+      lungBaseY - 40 * scale + 3,
+      centerX + 85 * scale + 3,
+      lungBaseY - 25 * scale + 3,
+    )
+    ctx.bezierCurveTo(
+      centerX + 100 * scale + 3,
+      lungBaseY - 5 * scale + 3,
+      centerX + 105 * scale + 3,
+      lungBaseY + 25 * scale + 3,
+      centerX + 95 * scale + 3,
+      lungBaseY + 45 * scale + 3,
+    )
+    ctx.bezierCurveTo(
+      centerX + 80 * scale + 3,
+      lungBaseY + 60 * scale + 3,
+      centerX + 45 * scale + 3,
+      lungBaseY + 58 * scale + 3,
+      centerX + 25 * scale + 3,
+      lungBaseY + 45 * scale + 3,
+    )
+    ctx.bezierCurveTo(
+      centerX + 15 * scale + 3,
+      lungBaseY + 30 * scale + 3,
+      centerX + 12 * scale + 3,
+      lungBaseY + 10 * scale + 3,
+      centerX + 18 * scale + 3,
+      lungBaseY - 15 * scale + 3,
+    )
+    ctx.closePath()
+    ctx.fill()
+
+    // Right lung main body with gradient
+    const rightLungGradient = ctx.createRadialGradient(
+      rightLungX - 10,
+      lungBaseY + 5,
+      5,
+      rightLungX,
+      lungBaseY + 15,
+      70 * scale,
+    )
+    rightLungGradient.addColorStop(0, highlightLung)
+    rightLungGradient.addColorStop(0.4, lungColor)
+    rightLungGradient.addColorStop(1, darkerLung)
+
+    ctx.fillStyle = rightLungGradient
+    ctx.beginPath()
+    ctx.moveTo(centerX + 20 * scale, lungBaseY - 18 * scale)
+    // Upper lobe top curve
+    ctx.bezierCurveTo(
+      centerX + 32 * scale,
+      lungBaseY - 38 * scale,
+      centerX + 68 * scale,
+      lungBaseY - 42 * scale,
+      centerX + 88 * scale,
+      lungBaseY - 28 * scale,
+    )
+    // Outer right edge
+    ctx.bezierCurveTo(
+      centerX + 102 * scale,
+      lungBaseY - 8 * scale,
+      centerX + 107 * scale,
+      lungBaseY + 22 * scale,
+      centerX + 97 * scale,
+      lungBaseY + 42 * scale,
+    )
+    // Bottom curve
+    ctx.bezierCurveTo(
+      centerX + 82 * scale,
+      lungBaseY + 58 * scale,
+      centerX + 48 * scale,
+      lungBaseY + 55 * scale,
+      centerX + 28 * scale,
+      lungBaseY + 42 * scale,
+    )
+    // Inner mediastinal curve
+    ctx.bezierCurveTo(
+      centerX + 18 * scale,
+      lungBaseY + 28 * scale,
+      centerX + 15 * scale,
+      lungBaseY + 8 * scale,
+      centerX + 20 * scale,
+      lungBaseY - 18 * scale,
+    )
+    ctx.closePath()
+    ctx.fill()
+
+    // Right lung horizontal fissure (separates upper and middle lobes)
+    ctx.strokeStyle = darkerLung
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(centerX + 25 * scale, lungBaseY - 5 * scale)
+    ctx.quadraticCurveTo(centerX + 60 * scale, lungBaseY - 8 * scale, centerX + 90 * scale, lungBaseY - 12 * scale)
+    ctx.stroke()
+
+    // Right lung oblique fissure (separates middle and lower lobes)
+    ctx.beginPath()
+    ctx.moveTo(centerX + 50 * scale, lungBaseY - 28 * scale)
+    ctx.quadraticCurveTo(centerX + 75 * scale, lungBaseY + 15 * scale, centerX + 38 * scale, lungBaseY + 48 * scale)
+    ctx.stroke()
 
     // Right lung highlight
-    ctx.fillStyle = highlightLung
-    ctx.globalAlpha = 0.3
+    ctx.fillStyle = `rgba(255,255,255,0.25)`
     ctx.beginPath()
-    ctx.ellipse(centerX + 55, lungY + 5, 20, 15, 0.3, 0, Math.PI * 2)
+    ctx.ellipse(centerX + 60 * scale, lungBaseY - 15 * scale, 18 * scale, 12 * scale, 0.4, 0, Math.PI * 2)
     ctx.fill()
-    ctx.globalAlpha = 1
 
+    // Right lung outline
+    ctx.strokeStyle = outlineColor
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(centerX + 20 * scale, lungBaseY - 18 * scale)
+    ctx.bezierCurveTo(
+      centerX + 32 * scale,
+      lungBaseY - 38 * scale,
+      centerX + 68 * scale,
+      lungBaseY - 42 * scale,
+      centerX + 88 * scale,
+      lungBaseY - 28 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX + 102 * scale,
+      lungBaseY - 8 * scale,
+      centerX + 107 * scale,
+      lungBaseY + 22 * scale,
+      centerX + 97 * scale,
+      lungBaseY + 42 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX + 82 * scale,
+      lungBaseY + 58 * scale,
+      centerX + 48 * scale,
+      lungBaseY + 55 * scale,
+      centerX + 28 * scale,
+      lungBaseY + 42 * scale,
+    )
+    ctx.bezierCurveTo(
+      centerX + 18 * scale,
+      lungBaseY + 28 * scale,
+      centerX + 15 * scale,
+      lungBaseY + 8 * scale,
+      centerX + 20 * scale,
+      lungBaseY - 18 * scale,
+    )
+    ctx.stroke()
+
+    // ===========================================
+    // BRONCHIAL TREE (inside lungs)
+    // ===========================================
     ctx.strokeStyle = darkerLung
-    ctx.lineWidth = 3
     ctx.lineCap = "round"
 
-    // Left bronchus
-    ctx.beginPath()
-    ctx.moveTo(centerX - 8, lungY - 2)
-    ctx.quadraticCurveTo(centerX - 30, lungY + 5, centerX - 50, lungY + 10)
-    ctx.stroke()
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(centerX - 35, lungY + 5)
-    ctx.quadraticCurveTo(centerX - 45, lungY + 20, centerX - 55, lungY + 30)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(centerX - 50, lungY + 10)
-    ctx.quadraticCurveTo(centerX - 65, lungY + 15, centerX - 75, lungY + 25)
-    ctx.stroke()
-
-    // Right bronchus
+    // Left bronchial branches
     ctx.lineWidth = 3
     ctx.beginPath()
-    ctx.moveTo(centerX + 8, lungY - 2)
-    ctx.quadraticCurveTo(centerX + 30, lungY + 5, centerX + 50, lungY + 10)
-    ctx.stroke()
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(centerX + 35, lungY + 5)
-    ctx.quadraticCurveTo(centerX + 45, lungY + 20, centerX + 55, lungY + 30)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(centerX + 50, lungY + 10)
-    ctx.quadraticCurveTo(centerX + 65, lungY + 15, centerX + 75, lungY + 25)
+    ctx.moveTo(centerX - 35 * scale, bronchiY + 22 * scale)
+    ctx.quadraticCurveTo(centerX - 50 * scale, lungBaseY + 5 * scale, centerX - 60 * scale, lungBaseY + 15 * scale)
     ctx.stroke()
 
-    if (tar > 20) {
-      ctx.fillStyle = `rgba(30, 20, 10, ${tarFactor * 0.8})`
-      const spotCount = Math.floor(tar / 10)
+    ctx.lineWidth = 2
+    // Upper branch
+    ctx.beginPath()
+    ctx.moveTo(centerX - 45 * scale, lungBaseY)
+    ctx.quadraticCurveTo(centerX - 55 * scale, lungBaseY - 15 * scale, centerX - 70 * scale, lungBaseY - 20 * scale)
+    ctx.stroke()
+    // Lower branch
+    ctx.beginPath()
+    ctx.moveTo(centerX - 55 * scale, lungBaseY + 12 * scale)
+    ctx.quadraticCurveTo(centerX - 65 * scale, lungBaseY + 25 * scale, centerX - 75 * scale, lungBaseY + 35 * scale)
+    ctx.stroke()
+
+    // Right bronchial branches
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(centerX + 35 * scale, bronchiY + 22 * scale)
+    ctx.quadraticCurveTo(centerX + 50 * scale, lungBaseY + 5 * scale, centerX + 60 * scale, lungBaseY + 15 * scale)
+    ctx.stroke()
+
+    ctx.lineWidth = 2
+    // Upper branch
+    ctx.beginPath()
+    ctx.moveTo(centerX + 45 * scale, lungBaseY)
+    ctx.quadraticCurveTo(centerX + 55 * scale, lungBaseY - 15 * scale, centerX + 70 * scale, lungBaseY - 20 * scale)
+    ctx.stroke()
+    // Middle branch
+    ctx.beginPath()
+    ctx.moveTo(centerX + 50 * scale, lungBaseY + 8 * scale)
+    ctx.quadraticCurveTo(centerX + 65 * scale, lungBaseY + 5 * scale, centerX + 80 * scale, lungBaseY)
+    ctx.stroke()
+    // Lower branch
+    ctx.beginPath()
+    ctx.moveTo(centerX + 55 * scale, lungBaseY + 15 * scale)
+    ctx.quadraticCurveTo(centerX + 65 * scale, lungBaseY + 28 * scale, centerX + 75 * scale, lungBaseY + 38 * scale)
+    ctx.stroke()
+
+    // ===========================================
+    // TAR DAMAGE VISUALIZATION
+    // ===========================================
+    if (tar > 15) {
+      // Dark tar spots - more realistic distribution
+      const spotCount = Math.floor(tar / 8)
+
       for (let i = 0; i < spotCount; i++) {
         const side = i % 2 === 0 ? -1 : 1
-        const spotX = centerX + side * (30 + Math.random() * 40)
-        const spotY = lungY + 10 + Math.random() * 30
-        const spotSize = 3 + Math.random() * 5
+        const spotX = centerX + side * (25 + Math.random() * 55) * scale
+        const spotY = lungBaseY + (-15 + Math.random() * 50) * scale
+        const spotSize = (2 + Math.random() * 4) * scale
+
+        // Tar spot with slight blur effect
+        const tarGradient = ctx.createRadialGradient(spotX, spotY, 0, spotX, spotY, spotSize)
+        tarGradient.addColorStop(0, `rgba(20, 15, 10, ${0.6 + tarFactor * 0.4})`)
+        tarGradient.addColorStop(0.7, `rgba(30, 20, 15, ${0.4 + tarFactor * 0.3})`)
+        tarGradient.addColorStop(1, `rgba(40, 30, 20, 0)`)
+
+        ctx.fillStyle = tarGradient
         ctx.beginPath()
-        ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2)
+        ctx.arc(spotX, spotY, spotSize * 1.5, 0, Math.PI * 2)
         ctx.fill()
       }
+
+      // Darkening veins when heavily damaged
+      if (tar > 50) {
+        ctx.strokeStyle = `rgba(30, 20, 15, ${tarFactor * 0.5})`
+        ctx.lineWidth = 1.5
+
+        // Left damaged vessels
+        ctx.beginPath()
+        ctx.moveTo(centerX - 50 * scale, lungBaseY + 5 * scale)
+        ctx.quadraticCurveTo(centerX - 60 * scale, lungBaseY + 20 * scale, centerX - 55 * scale, lungBaseY + 35 * scale)
+        ctx.stroke()
+
+        // Right damaged vessels
+        ctx.beginPath()
+        ctx.moveTo(centerX + 50 * scale, lungBaseY + 5 * scale)
+        ctx.quadraticCurveTo(centerX + 60 * scale, lungBaseY + 20 * scale, centerX + 55 * scale, lungBaseY + 35 * scale)
+        ctx.stroke()
+      }
+    }
+
+    // ===========================================
+    // BREATHING ANIMATION GLOW (when healthy)
+    // ===========================================
+    if (health > 60 && tar < 40) {
+      const breathPhase = (Date.now() % 3000) / 3000
+      const glowIntensity = Math.sin(breathPhase * Math.PI * 2) * 0.1 + 0.1
+
+      ctx.fillStyle = `rgba(255, 200, 200, ${glowIntensity * healthFactor})`
+      ctx.beginPath()
+      ctx.ellipse(centerX - 55 * scale, lungBaseY + 10 * scale, 25 * scale, 30 * scale, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.ellipse(centerX + 55 * scale, lungBaseY + 10 * scale, 25 * scale, 30 * scale, 0, 0, Math.PI * 2)
+      ctx.fill()
     }
 
     ctx.restore()
