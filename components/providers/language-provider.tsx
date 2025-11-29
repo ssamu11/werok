@@ -19,6 +19,7 @@ export const translations = {
     "nav.home": "Beranda",
     "nav.causes": "Penyebab",
     "nav.impacts": "Dampak",
+    "nav.minigame": "Minigame", // Added minigame translation
     "nav.myths": "Mitos vs Fakta",
     "nav.quiz": "Kuis",
     "nav.quit": "Cara Berhenti",
@@ -264,6 +265,7 @@ export const translations = {
     "nav.home": "Home",
     "nav.causes": "Causes",
     "nav.impacts": "Impacts",
+    "nav.minigame": "Minigame", // Added minigame translation
     "nav.myths": "Myths vs Facts",
     "nav.quiz": "Quiz",
     "nav.quit": "How to Quit",

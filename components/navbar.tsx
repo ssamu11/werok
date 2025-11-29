@@ -25,6 +25,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "#causes", label: t("nav.causes") },
     { href: "#impacts", label: t("nav.impacts") },
+    { href: "#minigame", label: t("nav.minigame") },
     { href: "#myths", label: t("nav.myths") },
     { href: "#quiz", label: t("nav.quiz") },
     { href: "#quit", label: t("nav.quit") },
